@@ -28,4 +28,7 @@ Phases are committed independently after review. The lead owns integration and v
 
 ## Verification log
 - Initial repository clean; baseline commit `48f2662`.
+- Phase 0: scaffold build passed with zero warnings/errors; committed as `a2c96c9`.
+- Phase 1: leader independently ran `dotnet test FlashSaleFinder.sln --no-restore`: 15 passed, zero failed. Includes forged-token rejection, production demo rejection, latest-price search, validation, and PostgreSQL SQL translation/schema generation. PostgreSQL/Redis runtime remains unverified because Docker engine is unavailable.
+- Phase 1 deviation: search uses provider-compatible case-insensitive substring matching. PostgreSQL Full Text Search and actual query performance remain later production work. Redis is configured through the distributed-cache abstraction; query caching is not yet enabled.
 - Official references: [ASP.NET Core JWT validation](https://learn.microsoft.com/en-us/aspnet/core/security/authentication/configure-jwt-bearer-authentication?view=aspnetcore-10.0), [Npgsql EF Core 10](https://www.npgsql.org/efcore/release-notes/10.0.html).
