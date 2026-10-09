@@ -9,10 +9,14 @@ CREATE TABLE "Products" (
     "ProductUrl" character varying(2048),
     "ImageUrl" character varying(2048),
     "ComparableVariantKey" character varying(150),
+    "OriginalPrice" numeric(12,2),
+    "AffiliateUrl" character varying(2048),
+    "DealEndAt" timestamp with time zone,
     "IsSample" boolean NOT NULL,
     "CreatedAt" timestamp with time zone NOT NULL,
     CONSTRAINT "PK_Products" PRIMARY KEY ("Id"),
-    CONSTRAINT "CK_Products_Marketplace" CHECK ("Marketplace" IN ('Lazada', 'Shopee', 'TikTok'))
+    CONSTRAINT "CK_Products_Marketplace" CHECK ("Marketplace" IN ('Lazada', 'Shopee', 'TikTok')),
+    CONSTRAINT "CK_Products_OriginalPrice" CHECK ("OriginalPrice" IS NULL OR "OriginalPrice" >= 0)
 );
 
 
@@ -58,11 +62,34 @@ CREATE TABLE "PriceAlerts" (
     "Currency" character varying(3) NOT NULL,
     "Enabled" boolean NOT NULL,
     "LastTriggeredAt" timestamp with time zone,
+    "LastObservedPrice" numeric(12,2),
+    "LastEvaluatedObservationId" uuid,
     CONSTRAINT "PK_PriceAlerts" PRIMARY KEY ("Id"),
     CONSTRAINT "CK_Alerts_Currency" CHECK ("Currency" = 'THB'),
     CONSTRAINT "CK_Alerts_Price" CHECK ("TargetPrice" >= 0),
     CONSTRAINT "FK_PriceAlerts_WatchlistEntries_WatchlistEntryId" FOREIGN KEY ("WatchlistEntryId") REFERENCES "WatchlistEntries" ("Id") ON DELETE CASCADE
 );
+
+
+CREATE TABLE "AlertEvents" (
+    "Id" uuid NOT NULL,
+    "PriceAlertId" uuid NOT NULL,
+    "ObservationId" uuid NOT NULL,
+    "Price" numeric(12,2) NOT NULL,
+    "TargetPrice" numeric(12,2) NOT NULL,
+    "CreatedAt" timestamp with time zone NOT NULL,
+    CONSTRAINT "PK_AlertEvents" PRIMARY KEY ("Id"),
+    CONSTRAINT "CK_AlertEvents_Price" CHECK ("Price" >= 0),
+    CONSTRAINT "CK_AlertEvents_TargetPrice" CHECK ("TargetPrice" >= 0),
+    CONSTRAINT "FK_AlertEvents_PriceAlerts_PriceAlertId" FOREIGN KEY ("PriceAlertId") REFERENCES "PriceAlerts" ("Id") ON DELETE CASCADE,
+    CONSTRAINT "FK_AlertEvents_PriceObservations_ObservationId" FOREIGN KEY ("ObservationId") REFERENCES "PriceObservations" ("Id") ON DELETE CASCADE
+);
+
+
+CREATE INDEX "IX_AlertEvents_ObservationId" ON "AlertEvents" ("ObservationId");
+
+
+CREATE UNIQUE INDEX "IX_AlertEvents_PriceAlertId_ObservationId" ON "AlertEvents" ("PriceAlertId", "ObservationId");
 
 
 CREATE UNIQUE INDEX "IX_PriceAlerts_WatchlistEntryId" ON "PriceAlerts" ("WatchlistEntryId");

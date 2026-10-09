@@ -14,6 +14,9 @@ public sealed class Product
     public string? ProductUrl { get; set; }
     public string? ImageUrl { get; set; }
     public string? ComparableVariantKey { get; set; }
+    public decimal? OriginalPrice { get; set; }
+    public string? AffiliateUrl { get; set; }
+    public DateTimeOffset? DealEndAt { get; set; }
     public bool IsSample { get; set; }
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
     public List<PriceObservation> Observations { get; set; } = [];
@@ -58,6 +61,20 @@ public sealed class PriceAlert
     public string Currency { get; set; } = "THB";
     public bool Enabled { get; set; } = true;
     public DateTimeOffset? LastTriggeredAt { get; set; }
+    public decimal? LastObservedPrice { get; set; }
+    public Guid? LastEvaluatedObservationId { get; set; }
+}
+
+public sealed class AlertEvent
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid PriceAlertId { get; set; }
+    public PriceAlert PriceAlert { get; set; } = null!;
+    public Guid ObservationId { get; set; }
+    public PriceObservation Observation { get; set; } = null!;
+    public decimal Price { get; set; }
+    public decimal TargetPrice { get; set; }
+    public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 }
 
 public static class DomainRules

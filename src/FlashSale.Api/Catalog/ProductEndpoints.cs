@@ -20,6 +20,9 @@ public sealed record ProductDto
     public string Currency { get; init; } = "THB";
     public DateTimeOffset? CapturedAt { get; init; }
     public bool? InStock { get; init; }
+    public decimal? OriginalPrice { get; init; }
+    public string? AffiliateUrl { get; init; }
+    public DateTimeOffset? DealEndAt { get; init; }
 }
 public sealed record PriceDto(decimal Price, string Currency, DateTimeOffset CapturedAt, bool InStock);
 public sealed record PagedResult<T>(IReadOnlyList<T> Items, int Total, int Page, int PageSize);
@@ -89,6 +92,7 @@ public static class ProductEndpoints
         Id = x.Id, Marketplace = x.Marketplace.ToString(), Title = x.Title,
         VariantLabel = x.VariantLabel, Category = x.Category, ExternalProductId = x.ExternalProductId,
         ExternalVariantId = x.ExternalVariantId, ProductUrl = x.ProductUrl, ImageUrl = x.ImageUrl, IsSample = x.IsSample,
+        OriginalPrice = x.OriginalPrice, AffiliateUrl = x.AffiliateUrl, DealEndAt = x.DealEndAt,
         CurrentPrice = x.Observations.OrderByDescending(o => o.CapturedAt).ThenBy(o => o.SourceObservationId).Select(o => (decimal?)o.Price).FirstOrDefault(),
         CapturedAt = x.Observations.OrderByDescending(o => o.CapturedAt).ThenBy(o => o.SourceObservationId).Select(o => (DateTimeOffset?)o.CapturedAt).FirstOrDefault(),
         InStock = x.Observations.OrderByDescending(o => o.CapturedAt).ThenBy(o => o.SourceObservationId).Select(o => (bool?)o.InStock).FirstOrDefault()

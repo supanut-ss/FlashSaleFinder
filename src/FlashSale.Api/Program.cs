@@ -3,7 +3,9 @@ using System.Threading.RateLimiting;
 using FlashSale.Api.Catalog;
 using FlashSale.Api.Connectors;
 using FlashSale.Api.Data;
+using FlashSale.Api.Demo;
 using FlashSale.Api.Identity;
+using FlashSale.Api.Watching;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 
@@ -22,6 +24,11 @@ if (demo && !builder.Environment.IsDevelopment())
     throw new InvalidOperationException("Demo:Enabled is only permitted in Development.");
 
 builder.Services.AddProblemDetails();
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddSingleton<DataMutationLock>();
+builder.Services.AddScoped<FeedImporter>();
+builder.Services.AddScoped<AlertEvaluator>();
+if (demo) builder.Services.AddScoped<SampleFeed>();
 builder.Services.ConfigureHttpJsonOptions(options => options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 builder.Services.AddIdentity(builder.Configuration, demo);
 var postgres = builder.Configuration.GetConnectionString("Postgres");
@@ -59,6 +66,11 @@ builder.Services.AddRateLimiter(options =>
 });
 
 var app = builder.Build();
+if (demo && builder.Configuration.GetValue("Demo:SeedEnabled", true))
+{
+    using var scope = app.Services.CreateScope();
+    await scope.ServiceProvider.GetRequiredService<FeedImporter>().ImportAsync(scope.ServiceProvider.GetRequiredService<SampleFeed>());
+}
 // Generic responses keep database details and production exception messages out of API output.
 app.UseExceptionHandler();
 app.UseStatusCodePages();
@@ -72,10 +84,16 @@ app.MapGet("/api/status", (RuntimeMode mode) => Results.Ok(new
 {
     mode.IsDemo, mode.DatabaseProvider, mode.CacheProvider,
     DataLabel = mode.IsDemo ? "Sample data only; not live marketplace prices." : "No live marketplace connector configured.",
-    Marketplaces = MarketplaceCapabilities.Unavailable
+    Marketplaces = demo
+        ? MarketplaceCapabilities.Unavailable.Select(x => x.Marketplace == FlashSale.Api.Domain.Marketplace.Lazada
+            ? new ConnectorCapability(x.Marketplace, ConnectorAccess.SampleFeed, true, "Synthetic local fixture; no marketplace connection.") : x)
+        : MarketplaceCapabilities.Unavailable
 }));
 app.MapProductEndpoints();
+app.MapInsightEndpoints();
+app.MapWatchEndpoints();
 app.MapIdentityEndpoints(demo);
+if (demo) app.MapDemoEndpoints();
 app.Run();
 
 public partial class Program;

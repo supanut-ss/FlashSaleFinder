@@ -6,7 +6,8 @@ public enum ConnectorAccess { Unavailable, SampleFeed, AuthorizedFeed, OfficialA
 public sealed record ConnectorCapability(Marketplace Marketplace, ConnectorAccess Access, bool SupportsHistory, string Status);
 public sealed record FeedProduct(string ExternalProductId, string ExternalVariantId, string Title,
     string VariantLabel, string Category, string? ProductUrl, string? ImageUrl, string? ComparableVariantKey,
-    decimal Price, string Currency, DateTimeOffset CapturedAt, string SourceObservationId, bool InStock);
+    decimal Price, string Currency, DateTimeOffset CapturedAt, string SourceObservationId, bool InStock,
+    decimal? OriginalPrice = null, string? AffiliateUrl = null, DateTimeOffset? DealEndAt = null);
 
 public interface IMarketplaceConnector
 {
