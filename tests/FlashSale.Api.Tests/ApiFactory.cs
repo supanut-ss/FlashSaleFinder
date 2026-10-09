@@ -22,7 +22,7 @@ public sealed class ApiFactory(bool demo = true, string environment = "Developme
         {
             ["Demo:Enabled"] = demo.ToString(), ["Demo:DatabaseName"] = Guid.NewGuid().ToString(),
             ["Demo:SeedEnabled"] = seed.ToString(),
-            ["ConnectionStrings:Postgres"] = "", ["ConnectionStrings:Redis"] = "",
+            ["ConnectionStrings:MariaDb"] = "", ["ConnectionStrings:Redis"] = "",
             ["Authentication:Authority"] = "", ["Authentication:Audience"] = ""
         }));
         return base.CreateHost(builder);

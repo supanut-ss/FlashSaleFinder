@@ -3,7 +3,7 @@
 The supplied project plan is product input, not operational authorization to register accounts or publish services. The repository initially contained only a README.
 
 ## Decisions
-- Use .NET 10 modular monolith, PostgreSQL persistence, Redis cache and a web MVP.
+- Use .NET 10 modular monolith, MariaDB persistence, Redis cache and a web MVP.
 - Start with explicitly labelled sample data; no marketplace credentials are available. Never fabricate official API contracts or affiliate tracking links.
 - Keep prices in decimal THB and separate marketplace product/variant identities. Compare only explicitly matched variants.
 - Price history must contain captured observations; insufficient history must not appear as proven savings.
@@ -23,10 +23,13 @@ Phases are committed independently after review. The lead owns integration and v
 
 ## Known constraints
 - .NET SDK 10.0.401 is installed.
-- Docker CLI exists but Docker engine was unavailable at initial inspection. PostgreSQL/Redis runtime checks must be reported separately from in-memory tests.
+- Docker CLI exists; its engine was unavailable during the original phases. The database follow-up started Docker Desktop and verified the current MariaDB setup separately from in-memory tests.
 - Production price freshness, rate limits, cache retention and attribution depend on the granted marketplace contract.
 
 ## Verification log
+
+The phase entries below record the original PostgreSQL implementation before the database-provider follow-up at the end of this log.
+
 - Initial repository clean; baseline commit `48f2662`.
 - Phase 0: scaffold build passed with zero warnings/errors; committed as `a2c96c9`.
 - Phase 1: leader independently ran `dotnet test FlashSaleFinder.sln --no-restore`: 15 passed, zero failed. Includes forged-token rejection, production demo rejection, latest-price search, validation, and PostgreSQL SQL translation/schema generation. PostgreSQL/Redis runtime remains unverified because Docker engine is unavailable.
@@ -40,3 +43,6 @@ Phases are committed independently after review. The lead owns integration and v
 - Phase 3 UI smoke: Playwright desktop (1280px) and mobile (375px) showed 6 products and up to 60 history observations; searched headphones, opened details, authenticated, set a ฿900 target, simulated ฿990→฿792, and observed the in-app alert. No horizontal overflow or page errors.
 - Final integration verification: `dotnet test FlashSaleFinder.sln --configuration Release --no-restore` passed 27/27; Release build passed with 0 warnings/errors; `node --check` and `git diff --check` passed. PostgreSQL/Redis runtime remains unverified because Docker engine is unavailable.
 - Official references: [ASP.NET Core JWT validation](https://learn.microsoft.com/en-us/aspnet/core/security/authentication/configure-jwt-bearer-authentication?view=aspnetcore-10.0), [Npgsql EF Core 10](https://www.npgsql.org/efcore/release-notes/10.0.html).
+- Database provider follow-up: switched persistence and schema generation to MariaDB 11.4 with Microting's EF Core 10 provider. The provider is a community-maintained Pomelo fork; see the operations guide for version-pinning details.
+- MariaDB verification: Release build passed with 0 warnings/errors; the main suite passed 28/28; the separate MariaDB integration suite passed 1/1 against MariaDB 11.4. Runtime checks covered schema initialization and check constraints, catalog query translation/execution, repeated feed import at `datetime(6)` precision, case-sensitive identity values, and cascade delete. Package vulnerability audit reported no vulnerable API dependencies.
+- Compose runs MariaDB and Redis on the default host ports 3306/6379. This workspace already had services on both ports, so its ignored local `.env` selects 3307/6380; the defaults remain unchanged for other environments.

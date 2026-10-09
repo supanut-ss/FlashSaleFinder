@@ -18,10 +18,15 @@ public sealed class FeedImporter(FlashSaleDbContext db, DataMutationLock mutatio
         await foreach (var row in connector.ReadAsync(ct))
         {
             Validate(row);
-            var key = (row.ExternalProductId, row.ExternalVariantId, row.SourceObservationId);
-            if (rows.TryGetValue(key, out var duplicate) && duplicate != row)
+            var normalized = row with
+            {
+                CapturedAt = NormalizeTimestampPrecision(row.CapturedAt),
+                DealEndAt = row.DealEndAt is { } dealEnd ? NormalizeTimestampPrecision(dealEnd) : null
+            };
+            var key = (normalized.ExternalProductId, normalized.ExternalVariantId, normalized.SourceObservationId);
+            if (rows.TryGetValue(key, out var duplicate) && duplicate != normalized)
                 throw new ArgumentException("Conflicting duplicate observation IDs in feed.");
-            rows[key] = row;
+            rows[key] = normalized;
         }
         await mutationLock.Semaphore.WaitAsync(ct);
         try
@@ -103,6 +108,12 @@ public sealed class FeedImporter(FlashSaleDbContext db, DataMutationLock mutatio
         if (row.OriginalPrice is { } original) DomainRules.Money(original, "THB");
         if (row.DealEndAt is { } end) DomainRules.Utc(end);
         if (row.ComparableVariantKey is { } comparable) DomainRules.Required(comparable, 150);
+    }
+
+    private static DateTimeOffset NormalizeTimestampPrecision(DateTimeOffset value)
+    {
+        var utcTicks = value.UtcTicks;
+        return new DateTimeOffset(utcTicks - utcTicks % 10, TimeSpan.Zero);
     }
 
     public static Guid ProductId(Marketplace marketplace, string product, string variant) => StableId($"product|{marketplace}|{product.Length}:{product}|{variant}");

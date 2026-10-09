@@ -15,7 +15,7 @@ Marketplace account registration, API/feed eligibility, approved payloads, cachi
 
 ## Production gates
 
-- Execute schema and integration tests against PostgreSQL and Redis.
+- Execute schema and integration tests against MariaDB and Redis.
 - Configure a trusted JWT issuer/audience and validate real signed tokens.
 - Validate authorized provider payloads, quotas, retention and affiliate URLs.
 - Verify persistence, backup, deployment configuration and notification delivery.

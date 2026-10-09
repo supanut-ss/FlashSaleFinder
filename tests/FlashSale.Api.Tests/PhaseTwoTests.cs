@@ -93,6 +93,23 @@ public sealed class PhaseTwoTests
     }
 
     [Fact]
+    public async Task FeedTimestampsAreNormalizedToMariaDbMicrosecondPrecision()
+    {
+        await using var factory = new ApiFactory(clock: new TestClock(Now));
+        using var scope = factory.Services.CreateScope();
+        var importer = scope.ServiceProvider.GetRequiredService<FeedImporter>();
+        var row = Row("sub-microsecond", 19.99m, Now.AddTicks(-3));
+
+        var first = await importer.ImportAsync(new TestFeed(row));
+        var repeated = await importer.ImportAsync(new TestFeed(row));
+        var stored = await scope.ServiceProvider.GetRequiredService<FlashSaleDbContext>().PriceObservations.SingleAsync();
+
+        Assert.Equal(1, first.ObservationsAdded);
+        Assert.Equal(1, repeated.ObservationsSkipped);
+        Assert.Equal(Now.AddTicks(-10), stored.CapturedAt);
+    }
+
+    [Fact]
     public void DailyBaselinesExcludeTodayAndDoNotOverweightIntradaySamples()
     {
         var product = Product();

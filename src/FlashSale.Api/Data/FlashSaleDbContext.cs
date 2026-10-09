@@ -17,8 +17,8 @@ public sealed class FlashSaleDbContext(DbContextOptions<FlashSaleDbContext> opti
         model.Entity<Product>(b =>
         {
             b.Property(x => x.Marketplace).HasConversion<string>().HasMaxLength(20);
-            b.Property(x => x.ExternalProductId).HasMaxLength(100);
-            b.Property(x => x.ExternalVariantId).HasMaxLength(100);
+            b.Property(x => x.ExternalProductId).HasMaxLength(100).UseCollation("utf8mb4_bin");
+            b.Property(x => x.ExternalVariantId).HasMaxLength(100).UseCollation("utf8mb4_bin");
             b.Property(x => x.Title).HasMaxLength(300);
             b.Property(x => x.VariantLabel).HasMaxLength(150);
             b.Property(x => x.Category).HasMaxLength(100);
@@ -31,22 +31,22 @@ public sealed class FlashSaleDbContext(DbContextOptions<FlashSaleDbContext> opti
             b.HasIndex(x => x.Category);
             b.ToTable("Products", t =>
             {
-                t.HasCheckConstraint("CK_Products_Marketplace", "\"Marketplace\" IN ('Lazada', 'Shopee', 'TikTok')");
-                t.HasCheckConstraint("CK_Products_OriginalPrice", "\"OriginalPrice\" IS NULL OR \"OriginalPrice\" >= 0");
+                t.HasCheckConstraint("CK_Products_Marketplace", "Marketplace IN ('Lazada', 'Shopee', 'TikTok')");
+                t.HasCheckConstraint("CK_Products_OriginalPrice", "OriginalPrice IS NULL OR OriginalPrice >= 0");
             });
         });
         model.Entity<PriceObservation>(b =>
         {
             b.Property(x => x.Price).HasPrecision(12, 2);
             b.Property(x => x.Currency).HasMaxLength(3);
-            b.Property(x => x.SourceObservationId).HasMaxLength(150);
+            b.Property(x => x.SourceObservationId).HasMaxLength(150).UseCollation("utf8mb4_bin");
             b.HasOne(x => x.Product).WithMany(x => x.Observations).HasForeignKey(x => x.ProductId).OnDelete(DeleteBehavior.Cascade);
             b.HasIndex(x => new { x.ProductId, x.SourceObservationId }).IsUnique();
             b.HasIndex(x => new { x.ProductId, x.CapturedAt });
             b.ToTable("PriceObservations", t =>
             {
-                t.HasCheckConstraint("CK_Observations_Price", "\"Price\" >= 0");
-                t.HasCheckConstraint("CK_Observations_Currency", "\"Currency\" = 'THB'");
+                t.HasCheckConstraint("CK_Observations_Price", "Price >= 0");
+                t.HasCheckConstraint("CK_Observations_Currency", "Currency = 'THB'");
             });
         });
         model.Entity<AlertEvent>(b =>
@@ -58,14 +58,14 @@ public sealed class FlashSaleDbContext(DbContextOptions<FlashSaleDbContext> opti
             b.HasIndex(x => new { x.PriceAlertId, x.ObservationId }).IsUnique();
             b.ToTable("AlertEvents", t =>
             {
-                t.HasCheckConstraint("CK_AlertEvents_Price", "\"Price\" >= 0");
-                t.HasCheckConstraint("CK_AlertEvents_TargetPrice", "\"TargetPrice\" >= 0");
+                t.HasCheckConstraint("CK_AlertEvents_Price", "Price >= 0");
+                t.HasCheckConstraint("CK_AlertEvents_TargetPrice", "TargetPrice >= 0");
             });
         });
         model.Entity<AppUser>(b =>
         {
-            b.Property(x => x.Issuer).HasMaxLength(300);
-            b.Property(x => x.Subject).HasMaxLength(200);
+            b.Property(x => x.Issuer).HasMaxLength(300).UseCollation("utf8mb4_bin");
+            b.Property(x => x.Subject).HasMaxLength(200).UseCollation("utf8mb4_bin");
             b.HasIndex(x => new { x.Issuer, x.Subject }).IsUnique();
         });
         model.Entity<WatchlistEntry>(b =>
@@ -82,8 +82,8 @@ public sealed class FlashSaleDbContext(DbContextOptions<FlashSaleDbContext> opti
             b.HasOne(x => x.WatchlistEntry).WithOne().HasForeignKey<PriceAlert>(x => x.WatchlistEntryId).OnDelete(DeleteBehavior.Cascade);
             b.ToTable("PriceAlerts", t =>
             {
-                t.HasCheckConstraint("CK_Alerts_Price", "\"TargetPrice\" >= 0");
-                t.HasCheckConstraint("CK_Alerts_Currency", "\"Currency\" = 'THB'");
+                t.HasCheckConstraint("CK_Alerts_Price", "TargetPrice >= 0");
+                t.HasCheckConstraint("CK_Alerts_Currency", "Currency = 'THB'");
             });
         });
     }

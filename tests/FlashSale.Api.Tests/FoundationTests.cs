@@ -110,15 +110,17 @@ public sealed class FoundationTests
     }
 
     [Fact]
-    public void PostgreSqlModelHasRequiredConstraintsAndTranslatesCatalogQuery()
+    public void MariaDbModelHasRequiredConstraintsAndTranslatesCatalogQuery()
     {
         using var db = new FlashSaleDbContext(new DbContextOptionsBuilder<FlashSaleDbContext>()
-            .UseNpgsql("Host=localhost;Database=test;Username=test").Options);
+            .UseMySql("Server=localhost;Database=test;User=test;Password=test",
+                new MariaDbServerVersion(new Version(11, 4, 0))).Options);
         var schema = db.Database.GenerateCreateScript();
-        Assert.Contains("numeric(12,2)", schema);
+        Assert.Contains("decimal(12,2)", schema);
         Assert.Contains("CK_Observations_Currency", schema);
-        Assert.Contains("CREATE UNIQUE INDEX \"IX_Products_Marketplace_ExternalProductId_ExternalVariantId\"", schema);
-        Assert.Contains("CREATE UNIQUE INDEX \"IX_WatchlistEntries_UserId_ProductId\"", schema);
+        Assert.Contains("CREATE UNIQUE INDEX `IX_Products_Marketplace_ExternalProductId_ExternalVariantId`", schema);
+        Assert.Contains("CREATE UNIQUE INDEX `IX_WatchlistEntries_UserId_ProductId`", schema);
+        Assert.Contains("COLLATE utf8mb4_bin", schema);
         var query = ProductEndpoints.Project(db.Products).Where(x => x.CurrentPrice >= 10).OrderBy(x => x.CurrentPrice).Take(20).ToQueryString();
         Assert.Contains("SELECT", query);
         Assert.Contains("LIMIT", query);
