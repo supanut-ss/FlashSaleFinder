@@ -2,7 +2,7 @@
 
 A sample-first price research app. The original roadmap is reviewed in [docs/review.md](docs/review.md); phase ownership and gates are tracked in [docs/implementation-plan.md](docs/implementation-plan.md).
 
-The Development API supports search, price evidence, watchlists, in-app target alerts and a clearly labelled local price-drop simulation. A multi-factor Deal Score remains unavailable because the sample source lacks the seller, rating, popularity and urgency evidence needed to support it.
+The Development web app supports search, price evidence, watchlists, in-app target alerts and a clearly labelled local price-drop simulation. A multi-factor Deal Score remains unavailable because the sample source lacks the seller, rating, popularity and urgency evidence needed to support it.
 
 ## Development
 

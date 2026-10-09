@@ -182,6 +182,24 @@ public sealed class PhaseTwoTests
         Assert.Equal(HttpStatusCode.BadRequest, (await client.PostAsJsonAsync("/api/watchlist", new WatchRequest(id, -1))).StatusCode);
     }
 
+    [Fact]
+    public async Task ParallelFirstRequestsCreateOneDemoUser()
+    {
+        await using var factory = new ApiFactory(seed: true, clock: new TestClock(Now));
+        using var client = Client(factory, "parallel-user");
+        var paths = Enumerable.Range(0, 16).Select(index => (index % 3) switch
+        {
+            0 => "/api/me",
+            1 => "/api/watchlist",
+            _ => "/api/alerts"
+        });
+        var responses = await Task.WhenAll(paths.Select(path => client.GetAsync(path)));
+        Assert.All(responses, response => Assert.Equal(HttpStatusCode.OK, response.StatusCode));
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<FlashSaleDbContext>();
+        Assert.Equal(1, await db.Users.CountAsync(x => x.Issuer == IdentityConfiguration.DemoIssuer && x.Subject == "parallel-user"));
+    }
+
     private static HttpClient Client(ApiFactory factory, string subject)
     {
         var client = factory.CreateClient();

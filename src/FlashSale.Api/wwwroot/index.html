@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f8fa">
+  <meta name="description" content="ค้นหาดีลจากข้อมูลราคาและประวัติที่ตรวจสอบได้">
+  <title>Flash Hunt — เช็กราคาก่อนช้อป</title>
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <div class="sample-banner" role="note">
+    <span class="sample-mark" aria-hidden="true">i</span>
+    <p><strong>โหมดข้อมูลตัวอย่าง</strong> ราคาทั้งหมดเป็นข้อมูลจำลอง ไม่ใช่ราคาปัจจุบันจาก Marketplace</p>
+  </div>
+
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="Flash Hunt หน้าแรก">
+      <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M18 2 6 18h8l-1 12 13-18h-9l1-10Z"/></svg></span>
+      <span>flash hunt</span>
+    </a>
+    <nav class="top-actions" aria-label="เมนูหลัก">
+      <button class="nav-button" id="watchlist-open" type="button">รายการติดตาม <span id="watch-count" class="count">0</span></button>
+      <button class="nav-button" id="alerts-open" type="button">แจ้งเตือน</button>
+      <button class="login-button" id="login-button" type="button">เข้าโหมดเดโม</button>
+    </nav>
+  </header>
+
+  <main class="page-shell">
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <p class="eyebrow"><span class="live-dot" aria-hidden="true"></span> หลักฐานราคาก่อนตัดสินใจ</p>
+        <h1 id="hero-title">เจอราคาดี<br><span>พร้อมรู้ที่มา</span></h1>
+        <p class="hero-subtitle">ค้นหาสินค้าจากข้อมูลราคา แล้วเทียบกับประวัติที่บันทึกไว้</p>
+      </div>
+      <div class="hero-aside" aria-label="ข้อมูลจากระบบ">
+        <span class="hero-aside-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 17 9 12l3 3 7-8M15 7h4v4"/></svg></span>
+        <p>ส่วนต่างราคาอ้างอิงจาก<br><strong>วันที่มีข้อมูลจริง</strong></p>
+      </div>
+    </section>
+
+    <section class="search-panel" aria-label="ค้นหาและกรองสินค้า">
+      <form id="search-form" class="search-form" role="search">
+        <label class="search-box">
+          <span class="search-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.3"/><path d="m16 16 4.5 4.5"/></svg></span>
+          <span class="sr-only">ค้นหาสินค้า</span>
+          <input id="query" name="q" type="search" maxlength="200" placeholder="ค้นหาสินค้า เช่น หูฟังไร้สาย" autocomplete="off">
+          <kbd>Enter</kbd>
+        </label>
+        <button class="search-button" type="submit">ค้นหา</button>
+      </form>
+      <div class="filter-row">
+        <label class="filter-field"><span>แพลตฟอร์ม</span>
+          <select id="marketplace" aria-label="กรองตามแพลตฟอร์ม">
+            <option value="">ทุกแพลตฟอร์ม</option><option value="Lazada">Lazada</option><option value="Shopee">Shopee</option><option value="TikTok">TikTok Shop</option>
+          </select>
+        </label>
+        <label class="filter-field"><span>หมวดหมู่</span>
+          <select id="category" aria-label="กรองตามหมวดหมู่">
+            <option value="">ทุกหมวดหมู่</option><option value="Electronics">อิเล็กทรอนิกส์</option><option value="Home">บ้านและครัว</option><option value="Beauty">ความงาม</option>
+          </select>
+        </label>
+        <label class="filter-field price-field"><span>ราคาต่ำสุด</span>
+          <span class="price-input"><span aria-hidden="true">฿</span><input id="min-price" type="number" min="0" step="100" inputmode="numeric" placeholder="ไม่จำกัด" aria-label="ราคาต่ำสุด"></span>
+        </label>
+        <label class="filter-field price-field"><span>ราคาสูงสุด</span>
+          <span class="price-input"><span aria-hidden="true">฿</span><input id="max-price" type="number" min="0" step="100" inputmode="numeric" placeholder="ไม่จำกัด" aria-label="ราคาสูงสุด"></span>
+        </label>
+        <label class="filter-field sort-field"><span>เรียงตาม</span>
+          <select id="sort" aria-label="เรียงสินค้า"><option value="newest">ข้อมูลล่าสุด</option><option value="priceAsc">ราคาต่ำไปสูง</option><option value="priceDesc">ราคาสูงไปต่ำ</option></select>
+        </label>
+      </div>
+    </section>
+
+    <div class="results-heading">
+      <div><h2>สินค้าน่าดู</h2><p id="results-caption" class="muted">กำลังโหลดข้อมูล…</p></div>
+      <span id="marketplace-status" class="source-pill">เชื่อมต่อข้อมูล</span>
+    </div>
+    <div id="status-message" class="status-message" role="status" aria-live="polite" hidden></div>
+    <section id="product-grid" class="product-grid" aria-label="ผลการค้นหา" aria-live="polite"></section>
+    <nav id="pagination" class="pagination" aria-label="เปลี่ยนหน้าผลการค้นหา" hidden>
+      <button id="previous-page" class="page-button" type="button">หน้าก่อน</button>
+      <span id="page-caption"></span>
+      <button id="next-page" class="page-button" type="button">หน้าถัดไป</button>
+    </nav>
+
+    <section id="personal-area" class="personal-area" hidden aria-label="ข้อมูลส่วนตัว">
+      <div class="personal-section">
+        <div class="section-heading"><div><p class="eyebrow">เก็บไว้ดูอีกครั้ง</p><h2>รายการติดตาม</h2></div><span id="watch-total" class="section-count">0 รายการ</span></div>
+        <div id="watchlist-content" class="personal-content"><p class="empty-note">เข้าสู่โหมดเดโมเพื่อติดตามสินค้า</p></div>
+      </div>
+      <div class="personal-section">
+        <div class="section-heading"><div><p class="eyebrow">ราคาถึงเป้า</p><h2>การแจ้งเตือน</h2></div><span id="alert-total" class="section-count">0 รายการ</span></div>
+        <div id="alerts-content" class="personal-content"><p class="empty-note">รายการแจ้งเตือนจะแสดงที่นี่</p></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer"><span>flash hunt</span><p>ข้อมูลนี้เป็นตัวอย่างเพื่อสาธิตระบบ ไม่มีการเชื่อมต่อหรือยืนยันราคา Marketplace จริง</p></footer>
+
+  <dialog id="product-dialog" class="product-dialog" aria-labelledby="detail-title">
+    <div class="dialog-top"><span class="detail-kicker">รายละเอียดราคา</span><button class="icon-button" id="close-detail" type="button" aria-label="ปิดรายละเอียด">×</button></div>
+    <div id="detail-content" class="detail-content"></div>
+  </dialog>
+
+  <dialog id="notice-dialog" class="notice-dialog" aria-labelledby="notice-title">
+    <div class="dialog-top"><span class="detail-kicker">Flash Hunt</span><button class="icon-button" data-close-notice type="button" aria-label="ปิด">×</button></div>
+    <h2 id="notice-title">เข้าสู่โหมดเดโม</h2>
+    <p>บัญชีเดโมนี้เป็นบัญชีตัวอย่างที่ใช้ร่วมกันบนเครื่องนี้ ไม่ใช่บัญชีผู้ใช้จริง</p>
+    <div class="notice-actions"><button id="confirm-login" class="search-button" type="button">เข้าใช้บัญชีเดโม</button><button data-close-notice class="quiet-button" type="button">ไว้ก่อน</button></div>
+  </dialog>
+
+  <template id="product-card-template">
+    <article class="product-card">
+      <div class="product-art" aria-hidden="true"><span class="art-glyph"></span><span class="art-orbit"></span></div>
+      <div class="card-body">
+        <div class="card-meta"><span class="market-label"></span><span class="sample-tag">ตัวอย่าง</span></div>
+        <h3 class="card-title"></h3><p class="variant-label"></p>
+        <div class="card-price-row"><div><strong class="current-price"></strong><del class="original-price"></del><span class="price-caption">ราคาที่บันทึกล่าสุด</span></div><span class="card-savings"></span></div>
+        <div class="card-bottom"><span class="captured-label"></span><button class="detail-button" type="button">ดูประวัติราคา <span aria-hidden="true">→</span></button></div>
+      </div>
+    </article>
+  </template>
+</body>
+</html>

@@ -84,23 +84,28 @@ public static class IdentityConfiguration
     }
 }
 
-public sealed class CurrentUser(FlashSaleDbContext db)
+public sealed class CurrentUser(FlashSaleDbContext db, DataMutationLock mutationLock)
 {
     public async Task<AppUser> GetOrCreateAsync(ClaimsPrincipal principal, CancellationToken ct)
     {
-        var issuer = principal.FindFirstValue("iss") ?? throw new InvalidOperationException("A validated issuer is required.");
-        var subject = principal.FindFirstValue("sub") ?? throw new InvalidOperationException("A validated subject is required.");
-        var user = await db.Users.SingleOrDefaultAsync(x => x.Issuer == issuer && x.Subject == subject, ct);
-        if (user is not null) return user;
-        user = new AppUser { Issuer = issuer, Subject = subject };
-        db.Users.Add(user);
-        try { await db.SaveChangesAsync(ct); }
-        catch (DbUpdateException)
+        await mutationLock.Semaphore.WaitAsync(ct);
+        try
         {
-            db.Entry(user).State = EntityState.Detached;
-            user = await db.Users.SingleOrDefaultAsync(x => x.Issuer == issuer && x.Subject == subject, ct);
-            if (user is null) throw;
+            var issuer = principal.FindFirstValue("iss") ?? throw new InvalidOperationException("A validated issuer is required.");
+            var subject = principal.FindFirstValue("sub") ?? throw new InvalidOperationException("A validated subject is required.");
+            var user = await db.Users.SingleOrDefaultAsync(x => x.Issuer == issuer && x.Subject == subject, ct);
+            if (user is not null) return user;
+            user = new AppUser { Issuer = issuer, Subject = subject };
+            db.Users.Add(user);
+            try { await db.SaveChangesAsync(ct); }
+            catch (DbUpdateException)
+            {
+                db.Entry(user).State = EntityState.Detached;
+                user = await db.Users.SingleOrDefaultAsync(x => x.Issuer == issuer && x.Subject == subject, ct);
+                if (user is null) throw;
+            }
+            return user;
         }
-        return user;
+        finally { mutationLock.Semaphore.Release(); }
     }
 }
