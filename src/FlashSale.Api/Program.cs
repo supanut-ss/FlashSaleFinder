@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
 using FlashSale.Api.Catalog;
 using FlashSale.Api.Connectors;
+using FlashSale.Api.Connectors.Lazada;
 using FlashSale.Api.Data;
 using FlashSale.Api.Demo;
 using FlashSale.Api.Identity;
@@ -19,6 +20,13 @@ if (args is ["--write-schema", var schemaPath])
     return;
 }
 
+// One-off Lazada helpers run without the web host, so they need no authentication settings.
+if (args is ["--lazada-probe", ..] or ["--lazada-import", ..])
+{
+    Environment.ExitCode = await LazadaCommands.RunAsync(args);
+    return;
+}
+
 var builder = WebApplication.CreateBuilder(args);
 var demo = builder.Configuration.GetValue<bool>("Demo:Enabled");
 if (demo && !builder.Environment.IsDevelopment())
@@ -32,6 +40,11 @@ builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<DataMutationLock>();
 builder.Services.AddScoped<FeedImporter>();
 builder.Services.AddScoped<AlertEvaluator>();
+builder.Services.Configure<LazadaAffiliateOptions>(builder.Configuration.GetSection("Lazada:Affiliate"));
+builder.Services.AddHttpClient<LazadaAffiliateClient>(client => client.Timeout = TimeSpan.FromSeconds(30));
+builder.Services.AddScoped<LazadaAffiliateConnector>();
+var lazadaLive = !demo && (builder.Configuration.GetSection("Lazada:Affiliate").Get<LazadaAffiliateOptions>()?.IsConfigured ?? false);
+if (lazadaLive) builder.Services.AddHostedService<LazadaIngestService>();
 if (demo) builder.Services.AddScoped<SampleFeed>();
 builder.Services.ConfigureHttpJsonOptions(options => options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 builder.Services.AddIdentity(builder.Configuration, demo);
@@ -99,11 +112,14 @@ app.MapGet("/health", () => Results.Ok(new { Status = "ok" }));
 app.MapGet("/api/status", (RuntimeMode mode) => Results.Ok(new
 {
     mode.IsDemo, mode.DatabaseProvider, mode.CacheProvider,
-    DataLabel = mode.IsDemo ? "Sample data only; not live marketplace prices." : "No live marketplace connector configured.",
-    Marketplaces = demo
-        ? MarketplaceCapabilities.Unavailable.Select(x => x.Marketplace == FlashSale.Api.Domain.Marketplace.Lazada
-            ? new ConnectorCapability(x.Marketplace, ConnectorAccess.SampleFeed, true, "Synthetic local fixture; no marketplace connection.") : x)
-        : MarketplaceCapabilities.Unavailable
+    DataLabel = mode.IsDemo ? "Sample data only; not live marketplace prices."
+        : lazadaLive ? "Lazada affiliate feed; price history builds from repeated imports. Other marketplaces are not connected."
+        : "No live marketplace connector configured.",
+    Marketplaces = MarketplaceCapabilities.Unavailable.Select(x =>
+        x.Marketplace != FlashSale.Api.Domain.Marketplace.Lazada ? x
+        : demo ? new ConnectorCapability(x.Marketplace, ConnectorAccess.SampleFeed, true, "Synthetic local fixture; no marketplace connection.")
+        : lazadaLive ? new ConnectorCapability(x.Marketplace, ConnectorAccess.OfficialApi, true, "Lazada Affiliate Open API product feed.")
+        : x)
 }));
 app.MapProductEndpoints();
 app.MapInsightEndpoints();

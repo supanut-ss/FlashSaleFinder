@@ -35,6 +35,22 @@ Authentication__Audience=<api-audience>
 
 The authority must expose valid OpenID Connect discovery metadata and signing keys. The application does not issue production access tokens. Missing production configuration causes startup to fail. Configuring production infrastructure does not enable a live marketplace connector.
 
+## Choosing the database by environment
+
+`scripts/dev.ps1` starts the API in Development demo mode and picks the database from its parameters and the git-ignored `.env` file (see `.env.example`):
+
+```powershell
+./scripts/dev.ps1 -Database Memory                       # sample data in memory (default)
+./scripts/dev.ps1 -Database MariaDb                      # MariaDB + Redis from docker compose
+./scripts/dev.ps1 -Database MariaDb -DatabaseName other  # a different schema on the same server
+```
+
+A settings file may instead hold a ready-made `ConnectionStrings__MariaDb=...` line (pass it with `-EnvFile`; a UTF-8 BOM is tolerated). Because demo mode writes synthetic sample rows, the script refuses a database host that is not this machine unless you pass `-AllowRemote`; use that only for a scratch database. Pass `-NoRedis` to keep the cache in memory when you do not want to touch whatever Redis is listening locally.
+
+The script builds the connection strings from `.env` without printing the password, checks that MariaDB is reachable, and stops with a clear message if it is not. The Account screen of the web client shows which database and cache the API is really using (backed by `GET /api/status`), so a wrongly set environment is visible at a glance. The browser tests compare it with `E2E_EXPECT_DB` (`InMemory` by default, `MariaDB` when run against a MariaDB-backed API).
+
+Screenshots of every main screen at desktop, tablet and mobile sizes for both modes are in `docs/screenshots/memory` and `docs/screenshots/mariadb`. Regenerate them against a running API with `node scripts/capture-screens.mjs --base <url> --out <folder>` from `src/FlashSale.Web`. The script signs in to the demo account and simulates a price drop, so point it at a database you do not mind changing (for MariaDB, a scratch schema loaded from `schema.sql`).
+
 ## Demo on MariaDB
 
 By default the Development demo keeps its data in memory. To exercise the real database path with sample data, start the Compose services and opt in with `Demo__Database=MariaDb`. Demo mode is still Development-only, and the demo identity and synthetic data are unchanged; only storage moves to MariaDB, so the watchlist, alerts and price history survive restarts.
@@ -57,6 +73,24 @@ The MariaDB integration test creates and removes its own rows, so it is safe to 
 ## Rate limiting
 
 Requests are limited per client IP, 120 per minute by default. Set `RateLimit__PermitLimit` to change it; the browser tests raise it because they reload the page many times.
+
+## Lazada affiliate feed
+
+The Lazada connector reads the affiliate product feed (`/marketing/product/feed`) through the Open API shown under INTEGRATION > Open API in the Lazada Affiliate portal, and optionally Lazada's own tracking link per product (`/marketing/product/link`). It was written from that portal's reference pages; no public documentation exists for these two endpoints.
+
+What the API gives and does not give:
+- It returns the current offer price (`discountPrice`), stock, currency, name, category level 1 (an id) and pictures. There is **no price history, no list price and no product URL**, so ProDiff builds history from repeated imports (hourly by default, never faster than every 15 minutes) and leaves the list price empty.
+- Category is stored as "หมวด Lazada <id>" until ids are mapped to names, so these products only appear when the category filter is off.
+- Only THB items with a valid price are stored; anything else is skipped and counted in the log.
+
+Setup, once the portal has approved the API request:
+
+1. Copy the key, secret and user token into `.env.lazada` (git-ignored) as `Lazada__Affiliate__AppKey`, `Lazada__Affiliate__AppSecret` and `Lazada__Affiliate__UserToken`; see `.env.example` for the optional filters (category ids, product ids, page size, tracking links).
+2. Look at one real response before importing: `./scripts/lazada.ps1 -Action Probe`. It prints the top-level fields and how the first products map, and saves the raw JSON. The signature method, the Thailand gateway (`api.lazada.co.th/rest`) and the success response envelope are implemented from documentation and are only confirmed by a live call; adjust `LazadaFeedParser` if the probe shows a different shape. A call with deliberately fake credentials already reached the gateway and returned an `InvalidAppKey` error, which confirms the host, the path and the error format.
+3. Import once: `./scripts/lazada.ps1 -Action Import -EnvFile .env.lazada, <file with ConnectionStrings__MariaDb>`.
+4. Run the API with the same settings outside demo mode (which needs the production authentication settings above) and it imports on a schedule (`Lazada__Affiliate__IntervalMinutes`). In demo mode the live connector is never started.
+
+Check the Lazada Open Platform terms before storing and displaying price history, and keep using only the tracking links Lazada returns.
 
 ## Schema inspection
 

@@ -247,3 +247,14 @@ test.describe("keyboard and motion", () => {
     await expect(page.locator(".brand img").first()).toBeVisible();
   });
 });
+
+test.describe("system status", () => {
+  test("account screen shows the database and cache in use", async ({ page }) => {
+    await page.goto("/#/account");
+    const panel = page.getByRole("region", { name: "สถานะระบบ" });
+    await expect(panel.getByText("ฐานข้อมูล", { exact: true })).toBeVisible();
+    // Which provider this is depends on the environment the API was started with.
+    await expect(panel.locator("dd").first().locator("strong")).toHaveText(process.env.E2E_EXPECT_DB ?? "InMemory");
+    await expect(panel.getByText("ข้อมูลตัวอย่างเท่านั้น")).toBeVisible();
+  });
+});

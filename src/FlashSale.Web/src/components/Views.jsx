@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+import { api } from "../lib/api";
 import { dateTime, money } from "../lib/format";
 import { useSession } from "../lib/session";
 import { ChevronIcon } from "./Icons";
@@ -77,6 +79,38 @@ export function AlertsView() {
   );
 }
 
+const STORAGE_HINT = {
+  InMemory: "อยู่ในหน่วยความจำ หายเมื่อปิดเซิร์ฟเวอร์",
+  MariaDB: "เก็บถาวรในฐานข้อมูล",
+  Memory: "แคชในหน่วยความจำ",
+  Redis: "แคชด้วย Redis",
+};
+
+/** Shows which database and cache the API is actually using, so a mis-set environment is easy to spot. */
+function SystemStatus() {
+  const [status, setStatus] = useState(null);
+  useEffect(() => {
+    const controller = new AbortController();
+    api("/api/status", { signal: controller.signal }).then(setStatus).catch(() => setStatus(false));
+    return () => controller.abort();
+  }, []);
+
+  return (
+    <section className="panel" aria-labelledby="system-title">
+      <h2 id="system-title">สถานะระบบ</h2>
+      {status === null && <p className="panel-text">กำลังตรวจสอบ…</p>}
+      {status === false && <p className="panel-text">ตรวจสถานะระบบไม่ได้</p>}
+      {status && (
+        <dl className="status-list">
+          <div><dt>ฐานข้อมูล</dt><dd><strong className="price-inline">{status.databaseProvider}</strong> {STORAGE_HINT[status.databaseProvider]}</dd></div>
+          <div><dt>แคช</dt><dd><strong className="price-inline">{status.cacheProvider}</strong> {STORAGE_HINT[status.cacheProvider]}</dd></div>
+          <div><dt>ข้อมูล</dt><dd>{status.isDemo ? "ข้อมูลตัวอย่างเท่านั้น" : "ไม่มี Marketplace สด"}</dd></div>
+        </dl>
+      )}
+    </section>
+  );
+}
+
 export function AccountView() {
   const { signedIn, openLoginNotice, signOut } = useSession();
   return (
@@ -95,6 +129,7 @@ export function AccountView() {
         <h2>เกี่ยวกับข้อมูล</h2>
         <p className="panel-text">ราคาทั้งหมดเป็นข้อมูลจำลองเพื่อสาธิตระบบ ไม่มีการเชื่อมต่อหรือยืนยันราคากับ Marketplace จริง ส่วนต่างราคาคำนวณจากวันที่มีข้อมูลบันทึกไว้เท่านั้น และยังไม่ใช่ Deal Score</p>
       </section>
+      <SystemStatus />
       <a className="panel panel-link" href="#/"><span>กลับไปค้นหาสินค้า</span><ChevronIcon /></a>
     </>
   );
