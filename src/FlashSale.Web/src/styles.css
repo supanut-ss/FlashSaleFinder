@@ -241,6 +241,10 @@ button.list-main:hover { background: var(--hover); }
 .panel { display: grid; justify-items: start; gap: 10px; margin-bottom: 14px; padding: 20px; border: 1px solid var(--rule); border-radius: var(--radius); background: var(--surface); }
 .panel h2 { font-size: 18px; font-weight: 700; }
 .panel-text { max-width: 60ch; color: var(--ink-2); font-size: 15px; line-height: 1.8; }
+.status-list { display: grid; gap: 10px; width: 100%; margin: 0; }
+.status-list > div { display: grid; grid-template-columns: 7rem 1fr; gap: 4px 12px; align-items: baseline; padding-top: 10px; border-top: 1px solid var(--rule); }
+.status-list dt { color: var(--ink-2); font-size: 14px; }
+.status-list dd { margin: 0; font-size: 15px; overflow-wrap: anywhere; }
 .panel-link { display: flex; align-items: center; justify-content: space-between; min-height: 56px; font-weight: 600; text-decoration: none; }
 .panel-link svg { width: 20px; height: 20px; }
 .footer { display: flex; align-items: center; justify-content: space-between; gap: 20px; max-width: 1200px; margin: 0 auto; padding: 24px var(--gutter) 40px; border-top: 1px solid var(--rule); color: var(--ink-2); font-size: 13px; }

@@ -31,7 +31,7 @@ npm test
 npm run test:e2e
 ```
 
-To keep demo data in the local MariaDB container instead of memory, see [docs/operations.md](docs/operations.md#demo-on-mariadb).
+Choose where demo data lives with one command: `./scripts/dev.ps1 -Database Memory` (default) or `./scripts/dev.ps1 -Database MariaDb` (needs `docker compose up -d` and a `.env` copied from `.env.example`). See [docs/operations.md](docs/operations.md#choosing-the-database-by-environment); screenshots of both modes are in [docs/screenshots](docs/screenshots).
 
 ```powershell
 dotnet build FlashSaleFinder.sln
