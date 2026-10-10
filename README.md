@@ -23,6 +23,16 @@ npm run build   # production bundle served by the API at http://localhost:5080
 npm run dev     # optional: hot-reload at http://localhost:5173, proxies /api to localhost:5080
 ```
 
+Web tests live in the same folder. `npm test` runs unit tests; `npm run test:e2e` builds the bundle, starts the demo API on port 5081 and drives it in an installed Chrome on desktop, tablet and mobile sizes (set `PW_CHANNEL=msedge` to use Edge):
+
+```powershell
+cd src/FlashSale.Web
+npm test
+npm run test:e2e
+```
+
+To keep demo data in the local MariaDB container instead of memory, see [docs/operations.md](docs/operations.md#demo-on-mariadb).
+
 ```powershell
 dotnet build FlashSaleFinder.sln
 dotnet test FlashSaleFinder.sln
