@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { api } from "./lib/api";
-import { count } from "./lib/format";
+import { count, marketName } from "./lib/format";
 import { useDebounced, useMedia, useRoute } from "./lib/hooks";
 import { PAGE_SIZE, useProducts } from "./lib/useProducts";
 import { FeaturedCompare } from "./components/FeaturedCompare";
@@ -36,15 +36,19 @@ export default function App() {
   const [openId, setOpenId] = useState(null);
   const [status, setStatus] = useState("เชื่อมต่อข้อมูล");
   const [featured, setFeatured] = useState(null);
+  const [marketplaces, setMarketplaces] = useState([]);
 
   const debounced = useDebounced(filters, 350);
   const { cards, total, loading, error, reload } = useProducts(debounced, page);
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const filtersActive = activeFilterCount(filters);
+  // The featured comparison belongs to one marketplace, so hide it while another one is selected.
+  const showFeatured = featured && (!filters.marketplace || filters.marketplace === featured.product.marketplace);
+  const notConnected = Boolean(filters.marketplace) && marketplaces.some(m => m.marketplace === filters.marketplace && m.access === "Unavailable");
 
   useEffect(() => {
     api("/api/status")
-      .then(s => setStatus(s.isDemo ? "ข้อมูลตัวอย่างเท่านั้น" : "ไม่มี Marketplace สด"))
+      .then(s => { setStatus(s.isDemo ? "ข้อมูลตัวอย่างเท่านั้น" : "ไม่มี Marketplace สด"); setMarketplaces(s.marketplaces ?? []); })
       .catch(() => setStatus("ตรวจสถานะข้อมูลไม่ได้"));
   }, []);
 
@@ -89,10 +93,10 @@ export default function App() {
             <p>เทียบราคาปัจจุบันกับประวัติราคาที่บันทึกไว้ แล้วดูหลักฐานของส่วนต่างราคา</p>
             {searchBar}
           </div>
-          {featured && <FeaturedCompare product={featured.product} insight={featured.insight} onOpen={openProduct} />}
+          {showFeatured && <FeaturedCompare product={featured.product} insight={featured.insight} onOpen={openProduct} />}
         </section>
       )}
-      {compact && featured && <FeaturedCompare product={featured.product} insight={featured.insight} onOpen={openProduct} />}
+      {compact && showFeatured && <FeaturedCompare product={featured.product} insight={featured.insight} onOpen={openProduct} />}
 
       {!compact && <div className="toolbar"><FilterFields values={filters} onChange={changeFilters} /></div>}
 
@@ -116,7 +120,9 @@ export default function App() {
         {cards.map(card => <ProductRow key={card.product.id} {...card} onOpen={openProduct} />)}
         {!loading && !error && cards.length === 0 && (
           <div className="empty-state">
-            <p><strong>ยังไม่พบสินค้าที่ตรงกัน</strong>ลองเปลี่ยนคำค้นหาหรือตัวกรอง แล้วค้นหาอีกครั้ง</p>
+            {notConnected
+              ? <p><strong>{marketName(filters.marketplace)} ยังไม่เชื่อมต่อ</strong>ยังไม่มีข้อมูลราคาจากแพลตฟอร์มนี้ จึงยังเปรียบเทียบไม่ได้ ลองเลือกแพลตฟอร์มอื่น</p>
+              : <p><strong>ยังไม่พบสินค้าที่ตรงกัน</strong>ลองเปลี่ยนคำค้นหาหรือตัวกรอง แล้วค้นหาอีกครั้ง</p>}
             {(filters.query || filtersActive > 0) && (
               <button className="btn btn-ghost" type="button" onClick={() => changeFilters(INITIAL_FILTERS)}>ล้างการค้นหาและตัวกรอง</button>
             )}

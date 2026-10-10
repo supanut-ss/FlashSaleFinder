@@ -31,3 +31,8 @@ export function evidenceText(evidence, days) {
 
 /** Average price over the given window (e.g. 30 days), or null when the insight lacks it. */
 export const windowAverage = (insight, days) => insight?.windows?.find(w => w.days === days)?.averagePrice ?? null;
+
+const ACCESS_LABELS = { Unavailable: "ยังไม่เชื่อมต่อ", SampleFeed: "ข้อมูลตัวอย่าง", AuthorizedFeed: "นำเข้าจากไฟล์", OfficialApi: "เชื่อมต่อแล้ว" };
+
+/** Thai label for how a marketplace is connected, from the access level reported by /api/status. */
+export const accessLabel = access => ACCESS_LABELS[access] ?? access;

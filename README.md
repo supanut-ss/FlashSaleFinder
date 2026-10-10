@@ -43,7 +43,7 @@ If using the repository's RTK convention, prefix commands with `rtk proxy`.
 ## Boundaries
 
 - No authorized marketplace feed or API credentials were supplied. Sample data does not represent current marketplace prices, actual discounts, availability or affiliate attribution.
-- Live Lazada integration is the next external integration gate. Shopee and TikTok remain future phases pending their own authorized contracts.
+- The Lazada affiliate connector is written and waits for approved API credentials. Shopee and TikTok have no connector yet; [docs/marketplaces.md](docs/marketplaces.md) says how one plugs in and what each needs.
 - Production uses MariaDB, Redis and a configured trusted JWT issuer. Secrets belong in environment variables or a secret store; do not commit them.
 - Local demo identity and data are for development only. Do not expose demo mode publicly.
 - Production deployment, push/email providers and affiliate account registration are outside the sample implementation.

@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
 using FlashSale.Api.Catalog;
 using FlashSale.Api.Connectors;
+using FlashSale.Api.Connectors.Files;
 using FlashSale.Api.Connectors.Lazada;
 using FlashSale.Api.Data;
 using FlashSale.Api.Demo;
@@ -26,6 +27,11 @@ if (args is ["--lazada-probe", ..] or ["--lazada-import", ..])
     Environment.ExitCode = await LazadaCommands.RunAsync(args);
     return;
 }
+if (args is ["--feed-probe", ..] or ["--feed-import", ..])
+{
+    Environment.ExitCode = await FileFeedCommands.RunAsync(args);
+    return;
+}
 
 var builder = WebApplication.CreateBuilder(args);
 var demo = builder.Configuration.GetValue<bool>("Demo:Enabled");
@@ -42,9 +48,18 @@ builder.Services.AddScoped<FeedImporter>();
 builder.Services.AddScoped<AlertEvaluator>();
 builder.Services.Configure<LazadaAffiliateOptions>(builder.Configuration.GetSection("Lazada:Affiliate"));
 builder.Services.AddHttpClient<LazadaAffiliateClient>(client => client.Timeout = TimeSpan.FromSeconds(30));
+// Each live marketplace registers an IMarketplaceSource; the scheduler and /api/status pick them up. Demo never runs live feeds.
 builder.Services.AddScoped<LazadaAffiliateConnector>();
-var lazadaLive = !demo && (builder.Configuration.GetSection("Lazada:Affiliate").Get<LazadaAffiliateOptions>()?.IsConfigured ?? false);
-if (lazadaLive) builder.Services.AddHostedService<LazadaIngestService>();
+builder.Services.AddScoped<IMarketplaceSource>(sp => sp.GetRequiredService<LazadaAffiliateConnector>());
+// Optional file feeds exported from a portal, one per marketplace: FileFeeds__Shopee__Path, FileFeeds__TikTok__Path, ...
+foreach (var section in builder.Configuration.GetSection("FileFeeds").GetChildren())
+{
+    if (!Enum.TryParse<FlashSale.Api.Domain.Marketplace>(section.Key, true, out var feedMarketplace)) continue;
+    var feedOptions = section.Get<FileFeedOptions>() ?? new FileFeedOptions();
+    builder.Services.AddScoped<IMarketplaceSource>(sp => new FileFeedSource(feedMarketplace, feedOptions,
+        sp.GetRequiredService<TimeProvider>(), sp.GetRequiredService<ILogger<FileFeedSource>>()));
+}
+if (!demo) builder.Services.AddHostedService<MarketplaceIngestService>();
 if (demo) builder.Services.AddScoped<SampleFeed>();
 builder.Services.ConfigureHttpJsonOptions(options => options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 builder.Services.AddIdentity(builder.Configuration, demo);
@@ -109,18 +124,22 @@ app.UseAuthorization();
 app.UseDefaultFiles();
 app.UseStaticFiles();
 app.MapGet("/health", () => Results.Ok(new { Status = "ok" }));
-app.MapGet("/api/status", (RuntimeMode mode) => Results.Ok(new
+app.MapGet("/api/status", (RuntimeMode mode, IEnumerable<IMarketplaceSource> sources) =>
 {
-    mode.IsDemo, mode.DatabaseProvider, mode.CacheProvider,
-    DataLabel = mode.IsDemo ? "Sample data only; not live marketplace prices."
-        : lazadaLive ? "Lazada affiliate feed; price history builds from repeated imports. Other marketplaces are not connected."
-        : "No live marketplace connector configured.",
-    Marketplaces = MarketplaceCapabilities.Unavailable.Select(x =>
-        x.Marketplace != FlashSale.Api.Domain.Marketplace.Lazada ? x
-        : demo ? new ConnectorCapability(x.Marketplace, ConnectorAccess.SampleFeed, true, "Synthetic local fixture; no marketplace connection.")
-        : lazadaLive ? new ConnectorCapability(x.Marketplace, ConnectorAccess.OfficialApi, true, "Lazada Affiliate Open API product feed.")
-        : x)
-}));
+    var live = sources.Where(x => x.IsConfigured).ToList();
+    return Results.Ok(new
+    {
+        mode.IsDemo, mode.DatabaseProvider, mode.CacheProvider,
+        DataLabel = mode.IsDemo ? "Sample data only; not live marketplace prices."
+            : live.Count > 0 ? $"Live feeds: {string.Join(", ", live.Select(x => x.Marketplace))}. Price history builds from repeated imports; other marketplaces are not connected."
+            : "No live marketplace connector configured.",
+        Marketplaces = Enum.GetValues<FlashSale.Api.Domain.Marketplace>().Select(m =>
+            demo && m == FlashSale.Api.Domain.Marketplace.Lazada
+                ? new ConnectorCapability(m, ConnectorAccess.SampleFeed, true, "Synthetic local fixture; no marketplace connection.")
+                : !demo && live.Where(x => x.Marketplace == m).OrderByDescending(x => x.Capability.Access).FirstOrDefault() is { } source ? source.Capability
+                : MarketplaceCapabilities.Unavailable(m))
+    });
+});
 app.MapProductEndpoints();
 app.MapInsightEndpoints();
 app.MapWatchEndpoints();

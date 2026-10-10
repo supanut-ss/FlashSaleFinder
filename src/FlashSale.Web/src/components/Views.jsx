@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../lib/api";
-import { dateTime, money } from "../lib/format";
+import { accessLabel, dateTime, marketName, money } from "../lib/format";
 import { useSession } from "../lib/session";
 import { ChevronIcon } from "./Icons";
 
@@ -105,6 +105,18 @@ function SystemStatus() {
           <div><dt>ฐานข้อมูล</dt><dd><strong className="price-inline">{status.databaseProvider}</strong> {STORAGE_HINT[status.databaseProvider]}</dd></div>
           <div><dt>แคช</dt><dd><strong className="price-inline">{status.cacheProvider}</strong> {STORAGE_HINT[status.cacheProvider]}</dd></div>
           <div><dt>ข้อมูล</dt><dd>{status.isDemo ? "ข้อมูลตัวอย่างเท่านั้น" : "ไม่มี Marketplace สด"}</dd></div>
+          <div>
+            <dt>แพลตฟอร์ม</dt>
+            <dd>
+              <ul className="market-status">
+                {(status.marketplaces ?? []).map(m => (
+                  <li key={m.marketplace} className={m.access === "Unavailable" ? "is-off" : undefined}>
+                    <span>{marketName(m.marketplace)}</span> <strong>{accessLabel(m.access)}</strong>
+                  </li>
+                ))}
+              </ul>
+            </dd>
+          </div>
         </dl>
       )}
     </section>

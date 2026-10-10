@@ -258,3 +258,27 @@ test.describe("system status", () => {
     await expect(panel.getByText("ข้อมูลตัวอย่างเท่านั้น")).toBeVisible();
   });
 });
+
+test.describe("marketplaces", () => {
+  test("account screen lists how each marketplace is connected", async ({ page }) => {
+    await page.goto("/#/account");
+    const list = page.getByRole("region", { name: "สถานะระบบ" }).locator(".market-status");
+    await expect(list.locator("li")).toHaveCount(3);
+    await expect(list.locator("li", { hasText: "Lazada" })).toContainText("ข้อมูลตัวอย่าง");
+    await expect(list.locator("li", { hasText: "Shopee" })).toContainText("ยังไม่เชื่อมต่อ");
+    await expect(list.locator("li", { hasText: "TikTok" })).toContainText("ยังไม่เชื่อมต่อ");
+  });
+
+  test("filtering to an unconnected marketplace explains why nothing is shown", async ({ page }) => {
+    if (await isCompact(page)) {
+      await page.getByRole("button", { name: /ตัวกรอง/ }).click();
+      await page.locator(".sheet[open] select").first().selectOption("Shopee");
+      await page.getByRole("button", { name: "แสดงผลลัพธ์" }).click();
+    } else {
+      await page.locator(".toolbar select").first().selectOption("Shopee");
+    }
+    await expect(page.getByText("Shopee ยังไม่เชื่อมต่อ")).toBeVisible();
+    await expect(page.locator(".compare")).toHaveCount(0);
+    await expect(page.getByText("ยังไม่พบสินค้าที่ตรงกัน")).toBeHidden();
+  });
+});
