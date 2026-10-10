@@ -28,3 +28,6 @@ export function evidenceText(evidence, days) {
   if (evidence === "outOfStock") return "สินค้าหมดในข้อมูลล่าสุด จึงยังไม่แสดงส่วนต่างราคา";
   return `มีข้อมูลย้อนหลัง ${days} วัน ซึ่งยังไม่เพียงพอสำหรับสรุปส่วนต่างราคา`;
 }
+
+/** Average price over the given window (e.g. 30 days), or null when the insight lacks it. */
+export const windowAverage = (insight, days) => insight?.windows?.find(w => w.days === days)?.averagePrice ?? null;

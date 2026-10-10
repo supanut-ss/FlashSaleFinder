@@ -1,4 +1,4 @@
-# Flash Hunt / FlashSaleFinder
+# ProDiff (FlashSaleFinder)
 
 A sample-first price research app. The original roadmap is reviewed in [docs/review.md](docs/review.md); phase ownership and gates are tracked in [docs/implementation-plan.md](docs/implementation-plan.md).
 

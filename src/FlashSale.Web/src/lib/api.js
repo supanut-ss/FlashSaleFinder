@@ -1,4 +1,4 @@
-const TOKEN_KEY = "flash-hunt-demo-token";
+const TOKEN_KEY = "prodiff-demo-token";
 
 export class ApiError extends Error {
   constructor(message, status) {
