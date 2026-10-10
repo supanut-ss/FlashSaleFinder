@@ -1,0 +1,5 @@
+Item ID,Shop ID,Product Name,Price,Original Price,Category,Stock,Product Link,Image,Affiliate Link
+100000001,555001,หูฟังไร้สาย Sample Buds,"฿1,290.00","1,990",Electronics,25,https://shopee.co.th/product/555001/100000001,https://example.com/image-1.jpg,https://example.com/aff/1
+100000002,555002,เครื่องชงกาแฟ Sample Brew,"฿2,390.00","3,490",Home,0,https://shopee.co.th/product/555002/100000002,https://example.com/image-2.jpg,https://example.com/aff/2
+100000003,555003,เซรั่ม Sample Hydrate,390,890,Beauty,120,https://shopee.co.th/product/555003/100000003,,
+100000004,555004,ตัวอย่างราคาเป็นช่วง,199 - 399,,Home,10,,,

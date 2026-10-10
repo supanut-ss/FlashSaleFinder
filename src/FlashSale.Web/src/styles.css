@@ -245,6 +245,9 @@ button.list-main:hover { background: var(--hover); }
 .status-list > div { display: grid; grid-template-columns: 7rem 1fr; gap: 4px 12px; align-items: baseline; padding-top: 10px; border-top: 1px solid var(--rule); }
 .status-list dt { color: var(--ink-2); font-size: 14px; }
 .status-list dd { margin: 0; font-size: 15px; overflow-wrap: anywhere; }
+.market-status { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.market-status li { display: flex; gap: 8px; align-items: baseline; }
+.market-status li.is-off strong { color: var(--ink-2); font-weight: 500; }
 .panel-link { display: flex; align-items: center; justify-content: space-between; min-height: 56px; font-weight: 600; text-decoration: none; }
 .panel-link svg { width: 20px; height: 20px; }
 .footer { display: flex; align-items: center; justify-content: space-between; gap: 20px; max-width: 1200px; margin: 0 auto; padding: 24px var(--gutter) 40px; border-top: 1px solid var(--rule); color: var(--ink-2); font-size: 13px; }

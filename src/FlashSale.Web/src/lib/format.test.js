@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { categoryName, count, evidenceText, marketName, money, priceDifference, windowAverage } from "./format";
+import { accessLabel, categoryName, count, evidenceText, marketName, money, priceDifference, windowAverage } from "./format";
 
 describe("money", () => {
   it("formats Thai baht with satang", () => expect(money(2590)).toBe("฿2,590.00"));
@@ -54,4 +54,14 @@ describe("windowAverage", () => {
     expect(windowAverage(insight, 90)).toBeNull();
     expect(windowAverage(null, 30)).toBeNull();
   });
+});
+
+describe("accessLabel", () => {
+  it("names each connection level in Thai", () => {
+    expect(accessLabel("AuthorizedFeed")).toBe("นำเข้าจากไฟล์");
+    expect(accessLabel("Unavailable")).toBe("ยังไม่เชื่อมต่อ");
+    expect(accessLabel("SampleFeed")).toBe("ข้อมูลตัวอย่าง");
+    expect(accessLabel("OfficialApi")).toBe("เชื่อมต่อแล้ว");
+  });
+  it("falls back to the raw value", () => expect(accessLabel("Future")).toBe("Future"));
 });

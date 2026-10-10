@@ -10,13 +10,19 @@ namespace FlashSale.Api.Connectors.Lazada;
 /// so price history builds up from repeated imports; the tracking link is Lazada's own and is never constructed locally.
 /// </summary>
 public sealed class LazadaAffiliateConnector(LazadaAffiliateClient client, IOptions<LazadaAffiliateOptions> options,
-    TimeProvider clock, ILogger<LazadaAffiliateConnector> log) : IMarketplaceConnector
+    TimeProvider clock, ILogger<LazadaAffiliateConnector> log) : IMarketplaceSource
 {
     private const int ProductIdBatch = 20;
     private readonly LazadaAffiliateOptions settings = options.Value;
 
-    public ConnectorCapability Capability => new(Marketplace.Lazada, ConnectorAccess.OfficialApi, true,
-        "Lazada Affiliate Open API product feed.");
+    public string Name => "Lazada affiliate API";
+    public Marketplace Marketplace => Marketplace.Lazada;
+    public bool IsConfigured => settings.IsConfigured;
+    public TimeSpan Interval => TimeSpan.FromMinutes(settings.IntervalMinutes);
+
+    public ConnectorCapability Capability => settings.IsConfigured
+        ? new(Marketplace.Lazada, ConnectorAccess.OfficialApi, true, "Lazada Affiliate Open API product feed.")
+        : MarketplaceCapabilities.Unavailable(Marketplace.Lazada);
 
     public async IAsyncEnumerable<FeedProduct> ReadAsync([EnumeratorCancellation] CancellationToken ct = default)
     {
