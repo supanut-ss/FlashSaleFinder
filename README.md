@@ -14,6 +14,15 @@ $env:Demo__Enabled = 'true'
 dotnet run --project src/FlashSale.Api --no-launch-profile --urls http://localhost:5080
 ```
 
+The web client is a React app (Vite, plain JavaScript) in `src/FlashSale.Web`. Its build output goes to `src/FlashSale.Api/wwwroot/` (git-ignored), so build it before running the API:
+
+```powershell
+cd src/FlashSale.Web
+npm install
+npm run build   # production bundle served by the API at http://localhost:5080
+npm run dev     # optional: hot-reload at http://localhost:5173, proxies /api to localhost:5080
+```
+
 ```powershell
 dotnet build FlashSaleFinder.sln
 dotnet test FlashSaleFinder.sln
