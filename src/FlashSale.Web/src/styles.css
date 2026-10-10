@@ -127,10 +127,8 @@ input::placeholder { color: var(--ink-2); opacity: .85; }
 .note-neutral { color: var(--ink-2); background: var(--chip); }
 
 /* ---------- Brand + navigation ---------- */
-.brand { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; color: var(--ink); text-decoration: none; font-size: 22px; font-weight: 700; letter-spacing: -.02em; }
-.brand-diff { color: var(--logo-coral); }
-.brand-pro { color: var(--logo-purple); }
-.brand-mark { overflow: visible; }
+.brand { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; text-decoration: none; }
+.brand-mark, .brand-wordmark { display: block; flex: none; }
 
 .sample-banner { display: flex; gap: 8px; align-items: center; justify-content: center; padding: 8px 20px; border-bottom: 1px solid var(--rule); color: var(--ink); background: var(--chip); font-size: 14px; text-align: center; }
 .sample-banner svg { width: 18px; height: 18px; }

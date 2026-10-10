@@ -11,7 +11,7 @@ The opening view is the product's own evidence: a featured product with its list
 - Interactive purple `#6A3FC2` (dark theme `#B79BFF`) is darker than the logo purple so text and buttons pass contrast; it draws links, buttons, bars and the chart line.
 - Coral marks the real price and the current-price points on bars and charts; it is used for nothing else.
 - Below average `#0B6B41`, above average `#B0301A` (each paired with an arrow icon and text).
-- The logo mark is an inline SVG (`Brand.jsx`) whose lens follows the surface colour, so it works in both themes; `public/icon.svg` is the favicon.
+- The logo is the supplied artwork (`docs/brand/ProDiff-logo-transparent.webp`, 1254px, transparent background). The app ships two small crops of it, `public/logo-mark.webp` and `public/logo-wordmark.webp`, plus `favicon-64.png` and `apple-touch-icon.png`. The lens is opaque white in the artwork, so on the dark theme it shows as a white disc. To regenerate the crops, extract the mark (x 214, y 156, 876x852) and the wordmark (x 314, y 1021, 635x160) from the source and resize to 2x the display height (mark 96px, wordmark 56px).
 - Typography: IBM Plex Sans Thai for all text; IBM Plex Mono with tabular figures for prices.
 - Every text/background pair is checked against WCAG AA (4.5:1, 3:1 for borders and focus rings) in both themes.
 
