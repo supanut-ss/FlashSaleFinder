@@ -88,9 +88,13 @@ test.describe("catalog", () => {
   test("pages through results", async ({ page }) => {
     // Seed data has one page; report a larger catalog so the pager has something to do.
     await page.route("**/api/products?*", async route => {
-      const response = await route.fetch();
-      const body = await response.json();
-      await route.fulfill({ status: response.status(), headers: response.headers(), json: { ...body, total: 13 } });
+      try {
+        const response = await route.fetch();
+        const body = await response.json();
+        await route.fulfill({ status: response.status(), headers: response.headers(), json: { ...body, total: 13 } });
+      } catch {
+        // The reload below can cancel a request that is still in flight; that request no longer matters.
+      }
     });
     const requested = [];
     page.on("request", request => { if (request.url().includes("/api/products?")) requested.push(new URL(request.url()).searchParams.get("page")); });
@@ -162,8 +166,13 @@ test.describe("demo account", () => {
     await expect(page.locator(".list-alert").first()).toContainText("ถึงเป้าแล้ว");
     await goTo(page, "ติดตาม");
     await expect(page.locator(".list-item").first()).toContainText("เซรั่ม");
-    for (const button of await page.getByRole("button", { name: /^เลิกติดตาม/ }).all()) await button.click();
-    await expect(page.getByText("ยังไม่มีสินค้าที่ติดตาม")).toBeVisible();
+    // Other tests may share the demo user, so only this product has to disappear; retry the click if it is lost.
+    const remove = page.getByRole("button", { name: /^เลิกติดตาม เซรั่ม/ });
+    await expect(async () => {
+      if (await remove.count()) await remove.first().click();
+      await expect(remove).toHaveCount(0, { timeout: 3000 });
+    }).toPass({ timeout: 15_000 });
+    await expect(page.locator(".list-item", { hasText: "เซรั่ม" })).toHaveCount(0);
   });
 
   test("drops an expired session quietly on load", async ({ page }) => {
