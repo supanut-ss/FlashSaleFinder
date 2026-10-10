@@ -487,3 +487,7 @@ src/FlashSale.Api/wwwroot/
 # Playwright output
 src/FlashSale.Web/playwright-report/
 src/FlashSale.Web/blob-report/
+
+# Lazada affiliate credentials and probe output
+.env.lazada
+lazada-probe*.json
