@@ -16,6 +16,7 @@ export function SessionProvider({ children }) {
   const [toast, setToast] = useState(null);
   const [noticeOpen, setNoticeOpen] = useState(false);
   const pendingLogin = useRef(null);
+  const refreshSeq = useRef(0);
   const toastTimer = useRef(undefined);
 
   const dismissToast = useCallback(() => setToast(null), []);
@@ -49,8 +50,11 @@ export function SessionProvider({ children }) {
 
   const refreshPersonal = useCallback(async () => {
     if (!getToken()) return;
+    // Overlapping refreshes can finish out of order; only the newest request may update the lists.
+    const seq = ++refreshSeq.current;
     try {
       const [watch, alertList] = await Promise.all([api("/api/watchlist"), api("/api/alerts")]);
+      if (seq !== refreshSeq.current) return;
       setWatchlist(watch.items);
       setAlerts(alertList.items);
     } catch (error) { handleError(error); }
@@ -67,9 +71,12 @@ export function SessionProvider({ children }) {
       const session = await api("/api/demo/session", { method: "POST", body: "{}" });
       setToken(session.accessToken);
       setSignedIn(true);
+      // Detach the waiting action first: closing the notice fires cancelLogin, which would otherwise cancel it.
+      const waiting = pendingLogin.current;
+      pendingLogin.current = null;
       setNoticeOpen(false);
       await refreshPersonal();
-      resolveLogin(true);
+      waiting?.(true);
     } catch (error) {
       setNoticeOpen(false);
       notify(`เข้าสู่โหมดเดโมไม่สำเร็จ: ${error.message}`, "error");

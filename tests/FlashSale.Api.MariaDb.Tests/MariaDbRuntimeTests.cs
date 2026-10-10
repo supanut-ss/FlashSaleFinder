@@ -33,7 +33,7 @@ public sealed class MariaDbRuntimeTests
         var repeated = await importer.ImportAsync(feed);
         Assert.Equal(1, first.ObservationsAdded);
         Assert.Equal(1, repeated.ObservationsSkipped);
-        var observation = await db.PriceObservations.SingleAsync();
+        var observation = await db.PriceObservations.SingleAsync(x => x.SourceObservationId == $"observation-{suffix}");
         Assert.Equal(capturedAt.AddTicks(-(capturedAt.UtcTicks % 10)), observation.CapturedAt);
         await Assert.ThrowsAnyAsync<Exception>(() => db.Database.ExecuteSqlInterpolatedAsync(
             $"UPDATE PriceObservations SET Price = {-1m} WHERE Id = {observation.Id}"));

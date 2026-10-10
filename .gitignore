@@ -483,3 +483,7 @@ $RECYCLE.BIN/
 
 # Frontend build output (src/FlashSale.Web -> npm run build)
 src/FlashSale.Api/wwwroot/
+
+# Playwright output
+src/FlashSale.Web/playwright-report/
+src/FlashSale.Web/blob-report/

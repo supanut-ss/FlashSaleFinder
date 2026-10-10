@@ -8,7 +8,7 @@ permissions:
   contents: read
 
 jobs:
-  verify:
+  api:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -17,4 +17,62 @@ jobs:
           dotnet-version: '10.0.x'
       - run: dotnet restore FlashSaleFinder.sln
       - run: dotnet build FlashSaleFinder.sln --configuration Release --no-restore
-      - run: dotnet test FlashSaleFinder.sln --configuration Release --no-build
+      # The MariaDB integration project needs a live database and runs in the mariadb job.
+      - run: dotnet test tests/FlashSale.Api.Tests/FlashSale.Api.Tests.csproj --configuration Release --no-build
+
+  web:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src/FlashSale.Web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: src/FlashSale.Web/package-lock.json
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - run: npm ci
+      - run: npm test
+      # Builds the bundle into the API's wwwroot, then drives it in Chrome against the demo API.
+      - run: npm run test:e2e
+        env:
+          CI: 'true'
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: src/FlashSale.Web/playwright-report
+          retention-days: 7
+
+  mariadb:
+    runs-on: ubuntu-latest
+    services:
+      mariadb:
+        image: mariadb:11.4
+        env:
+          MARIADB_DATABASE: flashsale
+          MARIADB_USER: flashsale
+          MARIADB_PASSWORD: ci-only-password
+          MARIADB_ROOT_PASSWORD: ci-only-root-password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Apply the schema
+        run: mysql --protocol=tcp -h 127.0.0.1 -u flashsale -pci-only-password flashsale < src/FlashSale.Api/Data/schema.sql
+      - name: Run MariaDB integration tests
+        run: dotnet test tests/FlashSale.Api.MariaDb.Tests/FlashSale.Api.MariaDb.Tests.csproj --configuration Release
+        env:
+          MARIADB_TEST_CONNECTION_STRING: Server=127.0.0.1;Port=3306;Database=flashsale;User=flashsale;Password=ci-only-password

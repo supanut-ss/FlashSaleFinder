@@ -110,6 +110,32 @@ public sealed class FoundationTests
     }
 
     [Fact]
+    public void DemoOnMariaDbRequiresAConnectionString()
+    {
+        using var factory = new ApiFactory(settings: new Dictionary<string, string?> { ["Demo:Database"] = "MariaDb" });
+        var exception = Assert.Throws<InvalidOperationException>(() => factory.CreateClient());
+        Assert.Contains("ConnectionStrings:MariaDb", exception.Message);
+    }
+
+    [Fact]
+    public async Task StatusReportsInMemoryProviderForDefaultDemo()
+    {
+        await using var factory = new ApiFactory();
+        var status = await factory.CreateClient().GetFromJsonAsync<System.Text.Json.JsonElement>("/api/status");
+        Assert.Equal("InMemory", status.GetProperty("databaseProvider").GetString());
+    }
+
+    [Fact]
+    public async Task RateLimitIsConfigurable()
+    {
+        await using var factory = new ApiFactory(settings: new Dictionary<string, string?> { ["RateLimit:PermitLimit"] = "2" });
+        var client = factory.CreateClient();
+        Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/api/status")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/api/status")).StatusCode);
+        Assert.Equal(HttpStatusCode.TooManyRequests, (await client.GetAsync("/api/status")).StatusCode);
+    }
+
+    [Fact]
     public void MariaDbModelHasRequiredConstraintsAndTranslatesCatalogQuery()
     {
         using var db = new FlashSaleDbContext(new DbContextOptionsBuilder<FlashSaleDbContext>()

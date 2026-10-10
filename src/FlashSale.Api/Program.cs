@@ -24,6 +24,9 @@ var demo = builder.Configuration.GetValue<bool>("Demo:Enabled");
 if (demo && !builder.Environment.IsDevelopment())
     throw new InvalidOperationException("Demo:Enabled is only permitted in Development.");
 
+// Demo data lives in memory unless a Development run opts into the local MariaDB container (Demo:Database=MariaDb).
+var useInMemory = demo && !string.Equals(builder.Configuration["Demo:Database"], "MariaDb", StringComparison.OrdinalIgnoreCase);
+
 builder.Services.AddProblemDetails();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<DataMutationLock>();
@@ -33,11 +36,13 @@ if (demo) builder.Services.AddScoped<SampleFeed>();
 builder.Services.ConfigureHttpJsonOptions(options => options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 builder.Services.AddIdentity(builder.Configuration, demo);
 var mariaDb = builder.Configuration.GetConnectionString("MariaDb");
-if (!demo && string.IsNullOrWhiteSpace(mariaDb))
-    throw new InvalidOperationException("ConnectionStrings:MariaDb is required outside explicit demo mode.");
+if (!useInMemory && string.IsNullOrWhiteSpace(mariaDb))
+    throw new InvalidOperationException(demo
+        ? "Demo:Database=MariaDb requires ConnectionStrings:MariaDb."
+        : "ConnectionStrings:MariaDb is required outside explicit demo mode.");
 builder.Services.AddDbContext<FlashSaleDbContext>(options =>
 {
-    if (demo) options.UseInMemoryDatabase(builder.Configuration["Demo:DatabaseName"] ?? "flashsale-demo");
+    if (useInMemory) options.UseInMemoryDatabase(builder.Configuration["Demo:DatabaseName"] ?? "flashsale-demo");
     else options.UseMySql(mariaDb, new MariaDbServerVersion(new Version(11, 4, 0)));
 });
 
@@ -52,13 +57,14 @@ else builder.Services.AddStackExchangeRedisCache(options =>
     options.Configuration = redis;
     options.InstanceName = "flashsale:";
 });
-builder.Services.AddSingleton(new RuntimeMode(demo, demo ? "InMemory" : "MariaDB", string.IsNullOrWhiteSpace(redis) ? "Memory" : "Redis"));
+builder.Services.AddSingleton(new RuntimeMode(demo, useInMemory ? "InMemory" : "MariaDB", string.IsNullOrWhiteSpace(redis) ? "Memory" : "Redis"));
+var permitLimit = builder.Configuration.GetValue("RateLimit:PermitLimit", 120);
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
     options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
         RateLimitPartition.GetFixedWindowLimiter(context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-            _ => new FixedWindowRateLimiterOptions { PermitLimit = 120, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
+            _ => new FixedWindowRateLimiterOptions { PermitLimit = permitLimit, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
     options.OnRejected = async (context, ct) =>
     {
         context.HttpContext.Response.Headers.RetryAfter = "60";
@@ -70,7 +76,16 @@ var app = builder.Build();
 if (demo && builder.Configuration.GetValue("Demo:SeedEnabled", true))
 {
     using var scope = app.Services.CreateScope();
-    await scope.ServiceProvider.GetRequiredService<FeedImporter>().ImportAsync(scope.ServiceProvider.GetRequiredService<SampleFeed>());
+    try
+    {
+        // Import is idempotent, so seeding a persistent database on every start is safe.
+        await scope.ServiceProvider.GetRequiredService<FeedImporter>().ImportAsync(scope.ServiceProvider.GetRequiredService<SampleFeed>());
+    }
+    catch (Exception ex) when (!useInMemory)
+    {
+        throw new InvalidOperationException(
+            "Could not seed demo data into MariaDB. Start it with `docker compose up -d` and check ConnectionStrings:MariaDb.", ex);
+    }
 }
 // Generic responses keep database details and production exception messages out of API output.
 app.UseExceptionHandler();
