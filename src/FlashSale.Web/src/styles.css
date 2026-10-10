@@ -3,20 +3,23 @@
 /* ---------- Tokens ---------- */
 :root {
   color-scheme: light dark;
-  --paper: #f6f7f5;
+  --logo-purple: #9873e0;
+  --logo-coral: #fd8a6a;
+  --logo-mint: #9be3b8;
+  --paper: #f8f6fb;
   --surface: #ffffff;
-  --hover: #f0f2ef;
-  --ink: #12161c;
-  --ink-2: #4d5764;
-  --rule: #d9dce0;
-  --chip: #e7e9ec;
-  --tag: #ffe14d;
-  --on-tag: #12161c;
+  --hover: #f2eff8;
+  --ink: #1b1726;
+  --ink-2: #595468;
+  --rule: #e1dcea;
+  --chip: #ece8f3;
+  --tag: var(--logo-coral);
+  --on-tag: #1b1726;
   --below: #0b6b41;
-  --below-bg: #e2f2e9;
+  --below-bg: #e1f5ea;
   --above: #b0301a;
   --above-bg: #fbe9e3;
-  --link: #1f4fd8;
+  --link: #6a3fc2;
   --on-link: #ffffff;
   --radius: 14px;
   --gutter: 32px;
@@ -33,19 +36,19 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --paper: #0f1216;
-    --surface: #171b21;
-    --hover: #1d222a;
-    --ink: #eceff3;
-    --ink-2: #a3adb9;
-    --rule: #2b323b;
-    --chip: #262c35;
-    --below: #5fd392;
+    --paper: #130f1c;
+    --surface: #1c1728;
+    --hover: #251f35;
+    --ink: #f1eef8;
+    --ink-2: #aea8be;
+    --rule: #352d49;
+    --chip: #2b2441;
+    --below: #66d99a;
     --below-bg: #12301f;
     --above: #ff9072;
     --above-bg: #3a1c13;
-    --link: #8fb0ff;
-    --on-link: #0f1216;
+    --link: #b79bff;
+    --on-link: #1b1230;
   }
 }
 
@@ -94,7 +97,7 @@ span.price-list del { font-family: var(--mono); }
 .icon-button { position: relative; display: grid; place-items: center; flex: none; width: 48px; height: 48px; border-radius: 12px; color: var(--ink); }
 .icon-button svg { width: 22px; height: 22px; }
 .icon-button:hover { background: var(--chip); }
-.count { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 99px; color: var(--paper); background: var(--ink); font: 600 12px/1 var(--font); }
+.count { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 99px; color: var(--on-link); background: var(--link); font: 600 12px/1 var(--font); }
 .pill { padding: 5px 12px; border: 1px solid var(--rule); border-radius: 99px; color: var(--ink-2); background: var(--surface); font-size: 13px; font-weight: 500; white-space: nowrap; }
 .sample-tag { display: inline-block; margin-left: 8px; padding: 1px 8px; border-radius: 6px; color: var(--ink); background: var(--chip); font-size: 12px; font-weight: 500; line-height: 1.6; white-space: nowrap; }
 .sample-tag-lg { margin: 0; padding: 3px 10px; font-size: 13px; }
@@ -125,9 +128,9 @@ input::placeholder { color: var(--ink-2); opacity: .85; }
 
 /* ---------- Brand + navigation ---------- */
 .brand { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; color: var(--ink); text-decoration: none; font-size: 22px; font-weight: 700; letter-spacing: -.02em; }
-.brand-mark { color: var(--ink); }
-.mark-list { fill: var(--paper); fill-opacity: .4; }
-.mark-real { fill: var(--tag); }
+.brand-diff { color: var(--logo-coral); }
+.brand-pro { color: var(--logo-purple); }
+.brand-mark { overflow: visible; }
 
 .sample-banner { display: flex; gap: 8px; align-items: center; justify-content: center; padding: 8px 20px; border-bottom: 1px solid var(--rule); color: var(--ink); background: var(--chip); font-size: 14px; text-align: center; }
 .sample-banner svg { width: 18px; height: 18px; }
@@ -137,7 +140,7 @@ input::placeholder { color: var(--ink-2); opacity: .85; }
 .topnav nav { display: flex; flex: 1; gap: 4px; }
 .topnav-link { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 8px 14px; border-radius: 10px; color: var(--ink-2); font-size: 15px; font-weight: 500; text-decoration: none; }
 .topnav-link:hover { color: var(--ink); background: var(--hover); }
-.topnav-link[aria-current="page"] { color: var(--ink); font-weight: 700; box-shadow: inset 0 -3px 0 var(--ink); border-radius: 0; }
+.topnav-link[aria-current="page"] { color: var(--ink); font-weight: 700; box-shadow: inset 0 -3px 0 var(--link); border-radius: 0; }
 
 .appbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 16px; }
 .tabbar { position: fixed; z-index: 40; right: 0; bottom: 0; left: 0; display: grid; grid-template-columns: repeat(4, 1fr); padding-bottom: var(--safe-bottom); border-top: 1px solid var(--rule); background: var(--surface); }
@@ -146,8 +149,8 @@ input::placeholder { color: var(--ink-2); opacity: .85; }
 .tab-icon { position: relative; display: grid; place-items: center; }
 .tab-icon svg { width: 24px; height: 24px; }
 .tab-icon .count { position: absolute; top: -6px; left: 14px; min-width: 18px; height: 18px; padding: 0 4px; font-size: 12px; }
-.tab[aria-current="page"] { color: var(--ink); font-weight: 700; }
-.tab[aria-current="page"]::before { content: ""; position: absolute; top: 0; left: 28%; right: 28%; height: 3px; border-radius: 0 0 3px 3px; background: var(--ink); }
+.tab[aria-current="page"] { color: var(--link); font-weight: 700; }
+.tab[aria-current="page"]::before { content: ""; position: absolute; top: 0; left: 28%; right: 28%; height: 3px; border-radius: 0 0 3px 3px; background: var(--link); }
 .tab[aria-current="page"] svg { stroke-width: 2.4; }
 
 /* ---------- Page ---------- */
@@ -164,7 +167,7 @@ input::placeholder { color: var(--ink-2); opacity: .85; }
 .searchbox input { flex: 1; min-width: 0; min-height: 52px; border: 0; outline: 0; background: transparent; color: var(--ink); }
 .searchbar .btn { min-height: 56px; }
 
-.compare { min-width: 0; padding: 22px; border: 1.5px solid var(--ink); border-radius: 18px; background: var(--surface); }
+.compare { min-width: 0; padding: 22px; border: 1.5px solid var(--logo-purple); border-radius: 18px; background: var(--surface); }
 .compare-market { color: var(--ink-2); font-size: 13px; font-weight: 500; }
 .compare-title { margin-top: 2px; font-size: 21px; font-weight: 700; line-height: 1.4; }
 .compare-prices { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; margin-top: 12px; }
@@ -206,7 +209,7 @@ input::placeholder { color: var(--ink-2); opacity: .85; }
 
 .price-bar { position: relative; height: 10px; border-radius: 5px; background: var(--chip); }
 .price-bar-empty { background: repeating-linear-gradient(90deg, var(--chip) 0 6px, transparent 6px 10px); }
-.price-bar-fill { position: absolute; inset: 0 auto 0 0; border-radius: 5px; background: var(--ink); }
+.price-bar-fill { position: absolute; inset: 0 auto 0 0; border-radius: 5px; background: var(--link); }
 .price-bar-tick { position: absolute; top: -4px; bottom: -4px; width: 3px; margin-left: -1px; border-radius: 2px; background: var(--tag); box-shadow: 0 0 0 1.5px var(--ink); }
 .price-bar-list { background: transparent; box-shadow: none; border-left: 2px dashed var(--ink-2); width: 0; border-radius: 0; }
 
@@ -216,12 +219,12 @@ input::placeholder { color: var(--ink-2); opacity: .85; }
 .chart svg:focus-visible { outline: 3px solid var(--link); outline-offset: 4px; }
 .chart-grid { stroke: var(--rule); stroke-dasharray: 3 5; }
 .chart-axis { fill: var(--ink-2); font: 500 12px var(--font); font-variant-numeric: tabular-nums; }
-.chart-line { fill: none; stroke: var(--ink); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+.chart-line { fill: none; stroke: var(--link); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
 .chart-line-draw { stroke-dasharray: 1; stroke-dashoffset: 0; animation: draw 1.2s cubic-bezier(.3, .7, .2, 1) both; }
 @keyframes draw { from { stroke-dashoffset: 1; } }
 .chart-now { fill: var(--tag); stroke: var(--ink); stroke-width: 2.5; }
 .chart-cursor { stroke: var(--ink-2); stroke-dasharray: 3 3; }
-.chart-dot { fill: var(--surface); stroke: var(--ink); stroke-width: 2.5; }
+.chart-dot { fill: var(--surface); stroke: var(--link); stroke-width: 2.5; }
 .chart-tip { position: absolute; z-index: 2; display: grid; padding: 6px 10px; border-radius: 8px; color: var(--paper); background: var(--ink); font-size: 12px; line-height: 1.4; white-space: nowrap; pointer-events: none; transform: translate(-50%, calc(-100% - 12px)); }
 .chart-tip strong { font: 600 14px var(--mono); }
 

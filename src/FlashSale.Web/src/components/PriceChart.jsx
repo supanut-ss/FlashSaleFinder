@@ -61,8 +61,8 @@ export function PriceChart({ prices, draw = false, label }) {
           tabIndex={0} onKeyDown={onKeyDown} onPointerDown={onPointer} onPointerMove={onPointer} onPointerLeave={() => setHover(null)} onBlur={() => setHover(null)}>
           <defs>
             <linearGradient id={gradientId} x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0%" stopColor="var(--ink)" stopOpacity=".14" />
-              <stop offset="100%" stopColor="var(--ink)" stopOpacity="0" />
+              <stop offset="0%" stopColor="var(--link)" stopOpacity=".18" />
+              <stop offset="100%" stopColor="var(--link)" stopOpacity="0" />
             </linearGradient>
           </defs>
           {[0, 0.5, 1].map(t => {
