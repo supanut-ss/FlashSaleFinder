@@ -9,4 +9,5 @@ export default defineConfig({
   plugins: [react()],
   build: { outDir: "../FlashSale.Api/wwwroot", emptyOutDir: true },
   server: { port: 5173, proxy: { "/api": apiTarget, "/health": apiTarget } },
+  test: { include: ["src/**/*.test.js"] },
 });

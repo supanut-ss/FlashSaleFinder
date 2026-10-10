@@ -67,9 +67,12 @@ export function SessionProvider({ children }) {
       const session = await api("/api/demo/session", { method: "POST", body: "{}" });
       setToken(session.accessToken);
       setSignedIn(true);
+      // Detach the waiting action first: closing the notice fires cancelLogin, which would otherwise cancel it.
+      const waiting = pendingLogin.current;
+      pendingLogin.current = null;
       setNoticeOpen(false);
       await refreshPersonal();
-      resolveLogin(true);
+      waiting?.(true);
     } catch (error) {
       setNoticeOpen(false);
       notify(`เข้าสู่โหมดเดโมไม่สำเร็จ: ${error.message}`, "error");

@@ -8,7 +8,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace FlashSale.Api.Tests;
 
-public sealed class ApiFactory(bool demo = true, string environment = "Development", bool seed = false, TimeProvider? clock = null) : WebApplicationFactory<Program>
+public sealed class ApiFactory(bool demo = true, string environment = "Development", bool seed = false, TimeProvider? clock = null, IReadOnlyDictionary<string, string?>? settings = null) : WebApplicationFactory<Program>
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -18,7 +18,7 @@ public sealed class ApiFactory(bool demo = true, string environment = "Developme
 
     protected override IHost CreateHost(IHostBuilder builder)
     {
-        builder.ConfigureHostConfiguration(config => config.AddInMemoryCollection(new Dictionary<string, string?>
+        builder.ConfigureHostConfiguration(config => config.AddInMemoryCollection(new Dictionary<string, string?>(settings ?? new Dictionary<string, string?>())
         {
             ["Demo:Enabled"] = demo.ToString(), ["Demo:DatabaseName"] = Guid.NewGuid().ToString(),
             ["Demo:SeedEnabled"] = seed.ToString(),
